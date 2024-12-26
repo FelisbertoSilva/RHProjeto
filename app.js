@@ -12,7 +12,7 @@ var TaskRoutes = require('./routes/taskRoutes');
 var app = express();
 
 mongoose.set('strictQuery', true);
-mongoose.connect('mongodb+srv://User:Password@cluster.ikdvx.mongodb.net/')
+mongoose.connect('mongodb+srv://User:Password@cluster.hne45.mongodb.net/')
     .then(() => console.log('MongoDB connected successfully'))
     .catch(err => console.error('MongoDB connection error:', err));
 
