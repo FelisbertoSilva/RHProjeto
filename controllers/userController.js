@@ -23,7 +23,7 @@ const registerUser = async (req, res) => {
             return res.status(400).json({ error: 'Department not found.' });
         }
 
-        if (currentUser.userRole === 'Manager' && (role === 'Admin' || role === 'Manager')) {
+        if (currentUser.role === 'Manager' && (role === 'Admin' || role === 'Manager')) {
             console.log("Error: Managers cannot create Admin or Manager users.");
             return res.status(403).json({ error: 'Managers cannot create Admin or Manager users.' });
         }
@@ -125,11 +125,11 @@ const getUserById = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        if (req.user.userRole === 'Employee' && req.user._id !== req.params.id) {
+        if (req.user.role === 'Employee' && req.user._id !== req.params.id) {
             return res.status(403).json({ error: 'Employees can only view their own profile.' });
         }
 
-        if (req.user.userRole === 'Manager') {
+        if (req.user.role === 'Manager') {
             if (req.user.department.name !== 'Human Resources' && user.department._id.toString() !== req.user.department._id.toString() && req.user._id !== req.params.id) {
                 return res.status(403).json({ error: 'Managers can only view employees in their department or themselves.' });
             }
@@ -149,7 +149,7 @@ const getUserByUsername = async (req, res) => {
     try {
         const users = await User.find({ username: req.params.username }).populate('department');
 
-        if (req.user.userRole === 'Employee') {
+        if (req.user.role === 'Employee') {
             const user = users.find(user => user._id.toString() === req.user._id.toString());
             if (!user) {
                 console.log("Error: User not found.");
@@ -159,7 +159,7 @@ const getUserByUsername = async (req, res) => {
             return res.status(200).json(user);
         }
 
-        if (req.user.userRole === 'Manager') {
+        if (req.user.role === 'Manager') {
             const filteredUsers = users.filter(user => 
                 user._id.toString() === req.user._id.toString() || 
                 user.department._id.toString() === req.user.department._id.toString() || 
@@ -169,7 +169,7 @@ const getUserByUsername = async (req, res) => {
             return res.status(200).json(filteredUsers);
         }
 
-        if (req.user.userRole === 'Admin') {
+        if (req.user.role === 'Admin') {
             console.log("Fetched users by username.");
             return res.status(200).json(users);
         }
@@ -188,7 +188,7 @@ const getUserByNIF = async (req, res) => {
     try {
         const users = await User.find({ nif: req.params.nif }).populate('department');
 
-        if (req.user.userRole === 'Employee') {
+        if (req.user.role === 'Employee') {
             const user = users.find(user => user._id.toString() === req.user._id.toString());
             if (!user) {
                 console.log("Error: User not found.");
@@ -198,7 +198,7 @@ const getUserByNIF = async (req, res) => {
             return res.status(200).json(user);
         }
 
-        if (req.user.userRole === 'Manager') {
+        if (req.user.role === 'Manager') {
             const filteredUsers = users.filter(user => 
                 user._id.toString() === req.user._id.toString() || user.department._id.toString() === req.user.department._id.toString() || req.user.department.name === 'Human Resources'
             );
@@ -206,7 +206,7 @@ const getUserByNIF = async (req, res) => {
             return res.status(200).json(filteredUsers);
         }
 
-        if (req.user.userRole === 'Admin') {
+        if (req.user.role === 'Admin') {
             const user = users.find(user => user.nif === req.params.nif);
             if (!user) {
                 console.log("Error: User not found.");
@@ -236,7 +236,7 @@ const getUsersByDepartment = async (req, res) => {
 
         const departmentId = department._id;
 
-        if (req.user.userRole === 'Admin') {
+        if (req.user.role === 'Admin') {
             const users = await User.find({ department: departmentId })
                 .populate('department')
                 .sort({ name: 1 });
@@ -245,7 +245,7 @@ const getUsersByDepartment = async (req, res) => {
             return res.status(200).json(users);
         }
 
-        if (req.user.userRole === 'Manager') {
+        if (req.user.role === 'Manager') {
             if (req.user.department.name === 'Human Resources' || req.user.department._id.toString() === departmentId.toString()) {
                 const users = await User.find({ department: departmentId })
                     .populate('department')
