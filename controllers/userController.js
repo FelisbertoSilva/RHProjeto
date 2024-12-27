@@ -385,7 +385,7 @@ const inactivateUserByUsername = async (req, res) => {
             return res.status(403).json({ error: 'Access denied.' });
         }
 
-        user.active = false;
+        user.role = 'Inactive';
         await user.save();
         console.log("User inactivated successfully.");
         res.status(200).json({ message: 'User inactivated successfully!' });
