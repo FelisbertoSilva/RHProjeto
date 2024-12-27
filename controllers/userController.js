@@ -28,16 +28,7 @@ const registerUser = async (req, res) => {
             return res.status(403).json({ error: 'Managers cannot create Admin or Manager users.' });
         }
 
-        const newUser = new User({
-            username,
-            password,
-            name,
-            nif,
-            department: departmentName,
-            role
-        });
-
-        const savedUser = await newUser.save();
+        const savedUser = await saveUser(username, password, name, nif, department.name, role);
         console.log("User saved to MongoDB:", savedUser);
 
         if (role === 'Manager') {
@@ -268,7 +259,7 @@ const getUsersByDepartment = async (req, res) => {
 };
 
 const updateUserByUsername = async (req, res) => {
-    const { name, nif, balance, role, departmentName } = req.body;
+    const { username, name, nif, balance, role, departmentName } = req.body;
 
     console.log("PUT: /api/users/" + req.params.username + " - " + JSON.stringify(req.body));
 
@@ -319,6 +310,10 @@ const updateUserByUsername = async (req, res) => {
                     return res.status(400).json({ error: 'Department not found.' });
                 }
                 user.department = department._id;
+            }
+
+            if (username !== undefined && isAdmin) {
+                user.username = username;
             }
 
             if (name !== undefined && isAdmin) {

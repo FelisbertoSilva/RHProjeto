@@ -60,14 +60,7 @@ const UserSchema = new Schema({
 
 const User = mongoose.model('User', UserSchema);
 
-const saveUser = async (username, password, name, nif, department, role) => {
-    if (role !== 'Admin') {
-        const departmentExists = await Department.findOne({ name: department });
-        if (!departmentExists) {
-            throw new Error('Department does not exist');
-        }
-    }
-
+const saveUser = async (username, password, name, nif, departmentName, role) => {
     if (role === 'Inactive') {
         throw new Error('Cannot create a user with the Inactive role');
     }
@@ -81,7 +74,7 @@ const saveUser = async (username, password, name, nif, department, role) => {
         username,
         name,
         nif,
-        department: role === 'Admin' ? undefined : department,
+        department: role === 'Admin' ? undefined : departmentName,
         role,
     });
 
@@ -126,6 +119,7 @@ const saveUser = async (username, password, name, nif, department, role) => {
     } catch (err) {
         throw new Error(`Error saving user: ${err.message}`);
     }
+    return user;
 };
 
 const authenticateUser = async (username, password) => {
