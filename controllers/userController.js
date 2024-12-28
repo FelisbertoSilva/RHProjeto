@@ -219,41 +219,21 @@ const getUsersByDepartment = async (req, res) => {
     console.log("GET: /api/users/department/" + req.params.departmentName);
 
     try {
-        const department = await DepartmentModel.findOne({ name: req.params.departmentName });
-        if (!department) {
-            console.log("Error: Department not found.");
-            return res.status(404).json({ message: 'Department not found' });
+        const departmentName = req.params.departmentName.trim().toLowerCase();
+
+        const users = await User.find({ department: { $regex: `^${departmentName}$`, $options: 'i' } });
+
+        if (users.length === 0) {
+            console.log("No users found for department:", req.params.departmentName);
+            return res.status(404).json({ message: 'No users found for this department' });
         }
 
-        const departmentId = department._id;
-
-        if (req.user.role === 'Admin') {
-            const users = await User.find({ department: departmentId })
-                .populate('department')
-                .sort({ name: 1 });
-
-            console.log("Fetched users by department successfully.");
-            return res.status(200).json(users);
-        }
-
-        if (req.user.role === 'Manager') {
-            const users = await User.find({ department: departmentId }).populate('department');
-
-            const filteredUsers = users.filter(user =>
-                req.user.department._id.toString() === departmentId.toString() ||
-                req.user.department.name === 'Human Resources'
-            );
-
-            console.log("Fetched users by department successfully.");
-            return res.status(200).json(filteredUsers);
-        }
-
-        console.error("Unexpected role encountered.");
-        return res.status(403).json({ error: 'Access denied.' });
+        console.log("Fetched users by department successfully:", users);
+        return res.status(200).json(users);
 
     } catch (err) {
         console.error("Error fetching users by department:", err);
-        res.status(500).json({ error: 'Error retrieving users', details: err });
+        return res.status(500).json({ error: 'Error retrieving users', details: err });
     }
 };
 
