@@ -237,20 +237,19 @@ const getUsersByDepartment = async (req, res) => {
         }
 
         if (req.user.role === 'Manager') {
-            if (req.user.department.name === 'Human Resources' || req.user.department._id.toString() === departmentId.toString()) {
-                const users = await User.find({ department: departmentId })
-                    .populate('department')
-                    .sort({ name: 1 });
+            const users = await User.find({ department: departmentId }).populate('department');
 
-                console.log("Fetched users by department successfully.");
-                return res.status(200).json(users);
-            } else {
-                console.log("Error: Managers can only view users in their own department.");
-                return res.status(403).json({ error: 'Managers can only view users in their own department.' });
-            }
+            const filteredUsers = users.filter(user =>
+                req.user.department._id.toString() === departmentId.toString() ||
+                req.user.department.name === 'Human Resources'
+            );
+
+            console.log("Fetched users by department successfully.");
+            return res.status(200).json(filteredUsers);
         }
 
-        return res.status(403).json({ error: 'Access denied: You do not have the necessary permissions.' });
+        console.error("Unexpected role encountered.");
+        return res.status(403).json({ error: 'Access denied.' });
 
     } catch (err) {
         console.error("Error fetching users by department:", err);
