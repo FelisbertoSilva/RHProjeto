@@ -1,4 +1,5 @@
 const express = require('express');
+const { logout } = require('../controllers/userController');
 const UserController = require('../controllers/userController');
 const { verifyToken, verifyHRManager } = require('../middleware');
 
