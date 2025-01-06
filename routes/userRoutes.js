@@ -53,6 +53,6 @@ router.put('/inactivate/:username',
 router.put('/balance/:nif', verifyToken, UserController.updateBalanceByNIF);
 router.get('/balance/:nif', verifyToken, UserController.getBalanceByNIF);
 router.post('/:username/change-password', verifyToken, UserController.changePassword);
-router.post('/logout', verifyToken, logout);
+router.post('/logout', verifyToken, UserController.logout);
 
 module.exports = router;

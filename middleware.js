@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const { User } = require('./models/userModel');
 const { securekey } = require('./secret.key');
+const cors = require('cors');
 require('dotenv').config();
 
 const handleError = (res, status, message) => {
@@ -70,6 +71,5 @@ const verifyHRManager = async (req, res, next) => {
         return handleError(res, 500, 'Internal server error');
     }
 };
-
 
 module.exports = { verifyToken, verifyRole, verifyHRManager };

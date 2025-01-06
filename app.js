@@ -10,7 +10,12 @@ var DepartmentRoutes = require('./routes/departmentRoutes');
 var TaskRoutes = require('./routes/taskRoutes');
 
 var app = express();
-app.use(cors());
+
+app.use(cors({
+    origin: 'http://localhost:5173',
+    credentials: true
+}));
+
 mongoose.set('strictQuery', true);
 mongoose.connect('mongodb+srv://User:Password@cluster.hne45.mongodb.net/')
     .then(() => console.log('MongoDB connected successfully'))
