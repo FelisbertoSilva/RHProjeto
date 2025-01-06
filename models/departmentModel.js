@@ -7,14 +7,16 @@ const departmentSchema = new mongoose.Schema({
         required: true,
         unique: true,
         index: true,
-        set: v => v.trim().toLowerCase(),
         validate: {
-            validator: function(v) {
-                return /^[A-Za-z\s-]+$/.test(v);
+            validator: async function(v) {
+                const existingDepartment = await mongoose.models.Department.findOne({
+                    name: { $regex: `^${v}$`, $options: 'i' }
+                });
+                return !existingDepartment;
             },
-            message: 'Department name must contain only letters, spaces, and hyphens.'
-        }
-    },  
+            message: 'Department name must be unique.',
+        },
+    },
     canteenDiscount: { 
         type: Number, 
         required: true, 
@@ -24,8 +26,8 @@ const departmentSchema = new mongoose.Schema({
             validator: function(v) {
                 return v % 1 === 0;
             },
-            message: 'Canteen discount must be an integer percentage.'
-        }
+            message: 'Canteen discount must be an integer percentage.',
+        },
     },
     managerUsername: {
         type: String, 
@@ -40,8 +42,8 @@ const departmentSchema = new mongoose.Schema({
                     return false;
                 }
             },
-            message: props => `User with username ${props.value} does not exist.`
-        }
+            message: props => `User with username ${props.value} does not exist.`,
+        },
     },
     employees: [{ 
         type: String, 
@@ -55,9 +57,9 @@ const departmentSchema = new mongoose.Schema({
                     return false;
                 }
             },
-            message: props => `User with username ${props.value} does not exist.`
-        }
-    }]
+            message: props => `User with username ${props.value} does not exist.`,
+        },
+    }],
 });
 
 departmentSchema.index({ name: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });

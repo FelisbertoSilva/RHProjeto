@@ -3,30 +3,28 @@ const DepartmentModel = require('../models/departmentModel');
 
 exports.createDepartment = async (req, res) => {
     console.log("POST: /api/departments - " + JSON.stringify(req.body));
-    
-    try {
-        const departmentName = req.body.name.trim().toLowerCase();
-        const existingDepartment = await DepartmentModel.findOne({ name: departmentName });
-        if (existingDepartment) {
-            console.log(`Error: Department with name ${req.body.name} already exists.`);
-            return res.status(400).json({ error: "Department name must be unique." });
-        }
 
-        if (req.body.managerUsername) {
-            const managerExists = await User.findOne({ username: req.body.managerUsername });
-            if (!managerExists) {
-                console.log(`Error: Manager with username ${req.body.managerUsername} not found.`);
-                return res.status(400).json({ message: 'Invalid manager username. Please provide a valid username.' });
-            }
+    try {
+        const departmentName = req.body.name.trim();
+
+        const existingDepartment = await DepartmentModel.findOne({
+            name: { $regex: `^${departmentName}$`, $options: 'i' }
+        });
+
+        if (existingDepartment) {
+            console.log(`Error: Department with name "${departmentName}" already exists.`);
+            return res.status(400).json({ error: "Department name must be unique." });
         }
 
         const department = new DepartmentModel({
             ...req.body,
             name: departmentName
         });
+
         const savedDepartment = await department.save();
-        console.log(`Success: Department ${savedDepartment.name} created successfully.`);
+        console.log(`Success: Department "${savedDepartment.name}" created successfully.`);
         res.status(201).json(savedDepartment);
+
     } catch (error) {
         console.error("Error creating department:", error);
         res.status(500).json({ error: 'Error creating department', details: error.message });
