@@ -177,3 +177,32 @@ exports.updateTask = async function(req, res) {
         res.status(500).json({ error: 'Error updating task', details: err.message });
     }
 };
+
+exports.getTasksDueNextWeek = async (req, res) => {
+    try {
+        const today = new Date();
+        const startOfNextSevenDays = new Date(today);
+        startOfNextSevenDays.setHours(0, 0, 0, 0);
+
+        const endOfNextSevenDays = new Date(startOfNextSevenDays);
+        endOfNextSevenDays.setDate(startOfNextSevenDays.getDate() + 7);
+        endOfNextSevenDays.setHours(23, 59, 59, 999);
+
+        console.log("Start of Next 7 Days:", startOfNextSevenDays);
+        console.log("End of Next 7 Days:", endOfNextSevenDays);
+
+        const tasks = await TaskModel.find({
+            limit_date: {
+                $gte: startOfNextSevenDays,
+                $lte: endOfNextSevenDays,
+            },
+        });
+
+        console.log("Filtered Tasks for Next 7 Days:", tasks);
+
+        res.status(200).json({ status: 'success', data: { tasks } });
+    } catch (error) {
+        console.error('Error fetching tasks for next 7 days:', error);
+        res.status(500).json({ status: 'fail', message: error.message });
+    }
+};
