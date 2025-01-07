@@ -1,0 +1,17 @@
+# Ignorar dependências
+node_modules/
+
+# Ignorar arquivos de build
+dist/
+build/
+
+# Ignorar logs
+*.log
+
+# Ignorar o arquivo de lock
+package-lock.json
+
+# Ignorar IDEs e configurações locais
+.DS_Store
+.vscode/
+.idea/
