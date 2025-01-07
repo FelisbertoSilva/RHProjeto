@@ -24,6 +24,8 @@ const verifyToken = (req, res, next) => {
             }
             return handleError(res, 403, 'Invalid token');
         }
+        
+        decodedUser._id=decodedUser.id;
 
         req.user = decodedUser;
         console.log(`Token verified. User: ${JSON.stringify(req.user)}`);
