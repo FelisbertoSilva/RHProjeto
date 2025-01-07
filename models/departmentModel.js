@@ -6,7 +6,6 @@ const departmentSchema = new mongoose.Schema({
         type: String, 
         required: true,
         unique: true,
-        index: true,
         validate: {
             validator: async function(v) {
                 const existingDepartment = await mongoose.models.Department.findOne({
