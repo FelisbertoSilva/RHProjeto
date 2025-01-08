@@ -196,9 +196,9 @@ exports.getTasksDueNextWeek = async (req, res) => {
                 $gte: startOfNextSevenDays,
                 $lte: endOfNextSevenDays,
             },
-        });
+        }).sort({ limit_date: 1 });
 
-        console.log("Filtered Tasks for Next 7 Days:", tasks);
+        console.log("Filtered and Sorted Tasks for Next 7 Days:", tasks);
 
         res.status(200).json({ status: 'success', data: { tasks } });
     } catch (error) {
