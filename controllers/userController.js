@@ -151,13 +151,13 @@ const getUserByUsername = async (req, res) => {
         }
 
         if (req.user.role === 'Manager') {
-            const filteredUsers = users.filter(user => 
+            const user = users.find(user => 
                 user._id.toString() === req.user._id.toString() || 
                 user.department._id.toString() === req.user.department._id.toString() || 
                 req.user.department.name === 'Human Resources'
             );
             console.log("Fetched users by username.");
-            return res.status(200).json(filteredUsers);
+            return res.status(200).json(user);
         }
 
         if (req.user.role === 'Admin') {
@@ -190,11 +190,11 @@ const getUserByNIF = async (req, res) => {
         }
 
         if (req.user.role === 'Manager') {
-            const filteredUsers = users.filter(user => 
+            const user = users.find(user => 
                 user._id.toString() === req.user._id.toString() || user.department._id.toString() === req.user.department._id.toString() || req.user.department.name === 'Human Resources'
             );
             console.log("Fetched users by NIF.");
-            return res.status(200).json(filteredUsers);
+            return res.status(200).json(user);
         }
 
         if (req.user.role === 'Admin') {
