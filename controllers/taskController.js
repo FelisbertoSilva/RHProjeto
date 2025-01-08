@@ -62,9 +62,12 @@ exports.getAllTasks = async function(req, res) {
             const usersInDepartment = await User.find({ department: user.department }).select('username');
             const usernames = usersInDepartment.map(u => u.username);
             tasks = await TaskModel.find({ assignedTo: { $in: usernames } });
-        } else {
+        }  else if (user.role === 'Employee') {
+            tasks = await TaskModel.find({ assignedTo: { $eq: user.username } });
+        }  else {
             tasks = await TaskModel.find();
         }
+
 
         tasks = tasks.map(task => {
             const date = new Date(task.limit_date);
