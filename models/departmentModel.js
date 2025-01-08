@@ -10,9 +10,9 @@ const departmentSchema = new mongoose.Schema({
         const existingDepartment = await mongoose.models.Department.findOne({
           name: { $regex: `^${v}$`, $options: 'i' },
         });
-        return !existingDepartment;
+        return existingDepartment !== null;
       },
-      message: 'Department name must be unique.',
+      message: 'Department not found.',
     },
   },
   canteenDiscount: {
@@ -22,7 +22,7 @@ const departmentSchema = new mongoose.Schema({
     max: 100,
     validate: {
       validator: function (v) {
-        return v % 1 === 0;
+        return v % 1 === 0; 
       },
       message: 'Canteen discount must be an integer percentage.',
     },
@@ -61,7 +61,5 @@ const departmentSchema = new mongoose.Schema({
     },
   ],
 });
-
-departmentSchema.index({ name: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });
 
 module.exports = mongoose.model('Department', departmentSchema);

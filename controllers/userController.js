@@ -28,7 +28,13 @@ const registerUser = async (req, res) => {
             return res.status(403).json({ error: 'Managers cannot create Admin or Manager users.' });
         }
 
-        const savedUser = await saveUser(username, password, name, nif, department.name, role);
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+            console.log("Error: Username already exists.");
+            return res.status(400).json({ error: 'Duplicate username. Please use a unique username.' });
+        }
+
+        const savedUser = await saveUser(username, password, name, nif, department._id, role);
         console.log("User saved to MongoDB:", savedUser);
 
         if (role === 'Manager') {
@@ -151,13 +157,13 @@ const getUserByUsername = async (req, res) => {
         }
 
         if (req.user.role === 'Manager') {
-            const user = users.find(user => 
+            const filteredUsers = users.filter(user => 
                 user._id.toString() === req.user._id.toString() || 
                 user.department._id.toString() === req.user.department._id.toString() || 
                 req.user.department.name === 'Human Resources'
             );
             console.log("Fetched users by username.");
-            return res.status(200).json(user);
+            return res.status(200).json(filteredUsers);
         }
 
         if (req.user.role === 'Admin') {
@@ -190,11 +196,11 @@ const getUserByNIF = async (req, res) => {
         }
 
         if (req.user.role === 'Manager') {
-            const user = users.find(user => 
+            const filteredUsers = users.filter(user => 
                 user._id.toString() === req.user._id.toString() || user.department._id.toString() === req.user.department._id.toString() || req.user.department.name === 'Human Resources'
             );
             console.log("Fetched users by NIF.");
-            return res.status(200).json(user);
+            return res.status(200).json(filteredUsers);
         }
 
         if (req.user.role === 'Admin') {
