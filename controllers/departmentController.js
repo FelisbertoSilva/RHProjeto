@@ -33,28 +33,13 @@ exports.createDepartment = async (req, res) => {
 
 exports.getAllDepartments = async (req, res) => {
     console.log("GET: /api/departments");
-    const user = req.user;
 
     try {
-        let departments;
-
-        if (user.role === 'Manager') {
-            departments = await DepartmentModel.find({ managerUsername: user.username }).sort({ name: 1 });
-            console.log(`Success: Retrieved ${departments.length} departments for Manager.`);
-            return res.json(departments);
-        }
-
-        if (user.role === 'Admin') {
-            departments = await DepartmentModel.find().sort({ name: 1 });
-            console.log(`Success: Retrieved ${departments.length} departments for Admin.`);
-            return res.json(departments);
-        }        
-
-        return res.status(403).json({ error: 'You are not authorized to view departments.' });
-
+        const departments = await DepartmentModel.find().sort({ name: 1 });
+        res.status(200).json(departments);
     } catch (error) {
-        console.error("Error retrieving departments:", error);
-        res.status(500).json({ error: error.message });
+        console.error("Error fetching departments:", error);
+        res.status(500).json({ error: 'Error fetching departments', details: error.message });
     }
 };
 

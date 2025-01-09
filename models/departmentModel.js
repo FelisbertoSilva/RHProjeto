@@ -10,11 +10,12 @@ const departmentSchema = new mongoose.Schema({
         const existingDepartment = await mongoose.models.Department.findOne({
           name: { $regex: `^${v}$`, $options: 'i' },
         });
-        return existingDepartment !== null;
+        return existingDepartment === null;
       },
-      message: 'Department not found.',
+      message: 'Department name must be unique.',
     },
   },
+
   canteenDiscount: {
     type: Number,
     required: true,
