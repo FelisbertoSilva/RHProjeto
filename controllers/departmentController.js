@@ -85,9 +85,9 @@ exports.getDepartmentByName = async (req, res) => {
 };
 
 exports.updateDepartment = async (req, res) => {
-    const departmentName = req.params.name.trim().toLowerCase();
-    console.log(`PUT: /api/departments/${departmentName} - ${JSON.stringify(req.body)}`);
-    
+    const oldDepartmentName = req.params.name.trim().toLowerCase();
+    console.log(`PUT: /api/departments/${oldDepartmentName} - ${JSON.stringify(req.body)}`);
+
     try {
         if (req.body.managerUsername) {
             const managerExists = await User.findOne({ username: req.body.managerUsername });
@@ -97,15 +97,24 @@ exports.updateDepartment = async (req, res) => {
             }
         }
 
+        const newDepartmentName = req.body.name?.trim().toLowerCase();
         const department = await DepartmentModel.findOneAndUpdate(
-            { name: departmentName },
+            { name: oldDepartmentName },
             req.body,
-            { new: true, collation: { locale: 'en', strength: 2 } } 
+            { new: true, collation: { locale: 'en', strength: 2 } }
         );
 
         if (!department) {
-            console.log(`Error: Department with name ${departmentName} not found.`);
+            console.log(`Error: Department with name ${oldDepartmentName} not found.`);
             return res.status(404).json({ message: 'Department not found' });
+        }
+
+        if (newDepartmentName && newDepartmentName !== oldDepartmentName) {
+            await User.updateMany(
+                { department: oldDepartmentName },
+                { $set: { department: newDepartmentName } }
+            );
+            console.log(`Associated users' department name updated from ${oldDepartmentName} to ${newDepartmentName}.`);
         }
 
         console.log(`Success: Department ${department.name} updated successfully.`);
