@@ -51,7 +51,7 @@ exports.createTask = async function(req, res) {
     }
 };
 
-exports.getAllTasks = async function(req, res) {
+exports.getAllTasks = async function (req, res) {
     console.log("GET: /api/tasks");
     const user = req.user;
 
@@ -62,12 +62,16 @@ exports.getAllTasks = async function(req, res) {
             const usersInDepartment = await User.find({ department: user.department }).select('username');
             const usernames = usersInDepartment.map(u => u.username);
             tasks = await TaskModel.find({ assignedTo: { $in: usernames } });
-        }  else if (user.role === 'Employee') {
+        } else if (user.role === 'Employee') {
             tasks = await TaskModel.find({ assignedTo: { $eq: user.username } });
-        }  else {
+        } else {
             tasks = await TaskModel.find();
         }
 
+        const today = new Date().setHours(0, 0, 0, 0);
+        tasks = tasks
+            .filter(task => new Date(task.limit_date) >= today)
+            .sort((a, b) => new Date(a.limit_date) - new Date(b.limit_date));
 
         tasks = tasks.map(task => {
             const date = new Date(task.limit_date);

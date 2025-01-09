@@ -3,6 +3,9 @@ const { User, saveUser, authenticateUser, inactivateUser } = require('../models/
 const DepartmentModel = require('../models/departmentModel');
 const { verifyHRManager } = require('../middleware');
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+const sqlite3 = require('sqlite3').verbose();
+const db = new sqlite3.Database('HRdatabase.db');
 
 const registerUser = async (req, res) => {
     const { username, password, name, nif, departmentName, role } = req.body;
@@ -440,37 +443,62 @@ const getBalanceByNIF = async (req, res) => {
 };
 
 const changePassword = async (req, res) => {
-    const { currentPassword, newPassword } = req.body;
+    const { newPassword } = req.body;
 
-    console.log("POST: /api/users/" + req.params.username + "/change-password - " + JSON.stringify(req.body));
+    console.log(
+        "POST: /api/users/" +
+        req.params.username +
+        "/change-password - " +
+        JSON.stringify(req.body)
+    );
 
-    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    if (!newPassword) {
+        console.log("No newPassword provided in request body");
+        return res.status(400).json({ error: "New password is required." });
+    }
+
+    const passwordRegex =
+        /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+=[\]{};:'"\\|,.<>/? ]{8,}$/;
     if (!passwordRegex.test(newPassword)) {
+        console.log("Password failed validation:", newPassword);
         return res.status(400).json({
-            error: 'Password must be at least 8 characters long, contain at least one number, and one uppercase letter.'
+            error:
+                "Password must be at least 8 characters long, contain at least one number, and one uppercase letter.",
         });
     }
 
     try {
         const user = await User.findOne({ username: req.params.username });
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            console.log(`User not found: ${req.params.username}`);
+            return res.status(404).json({ error: "User not found" });
         }
 
         const requesterUsername = req.user.username;
-        const isAdmin = req.user.role === 'Admin';
-        const isHRManager = req.user.role === 'Manager' && req.user.department === 'Human Resources';
+        const isAdmin = req.user.role === "Admin";
+        const isHRManager =
+            req.user.role === "Manager" &&
+            req.user.department === "Human Resources";
 
-        if (isAdmin && user.role === 'Manager' && user.department === 'Human Resources') {
-            const hashedPassword = await bcrypt.hash(newPassword, 10);
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
 
+        if (isHRManager && user.role !== "Admin") {
             await new Promise((resolve, reject) => {
                 db.run(
                     `UPDATE users SET password = ? WHERE username = ?`,
                     [hashedPassword, req.params.username],
                     (err) => {
                         if (err) {
-                            reject(new Error('Error updating password in SQLite: ' + err.message));
+                            console.error(
+                                "Error updating password in SQLite:",
+                                err.message
+                            );
+                            reject(
+                                new Error(
+                                    "Error updating password in SQLite: " +
+                                    err.message
+                                )
+                            );
                         } else {
                             resolve();
                         }
@@ -478,25 +506,31 @@ const changePassword = async (req, res) => {
                 );
             });
 
-            console.log("Admin updated HR Manager's password in SQLite.");
-            return res.status(200).json({ message: 'HR Manager password updated successfully by Admin.' });
+            console.log(
+                `HR Manager ${requesterUsername} updated password for ${req.params.username}.`
+            );
+            return res
+                .status(200)
+                .json({ message: "Password updated successfully." });
         }
 
-        if (requesterUsername === user.username) {
-            const passwordsMatch = await bcrypt.compare(currentPassword, user.password);
-            if (!passwordsMatch) {
-                return res.status(400).json({ error: 'Current password is incorrect.' });
-            }
-            
-            const hashedPassword = await bcrypt.hash(newPassword, 10);
-
+        if (isAdmin) {
             await new Promise((resolve, reject) => {
                 db.run(
                     `UPDATE users SET password = ? WHERE username = ?`,
                     [hashedPassword, req.params.username],
                     (err) => {
                         if (err) {
-                            reject(new Error('Error updating password in SQLite: ' + err.message));
+                            console.error(
+                                "Error updating password in SQLite:",
+                                err.message
+                            );
+                            reject(
+                                new Error(
+                                    "Error updating password in SQLite: " +
+                                    err.message
+                                )
+                            );
                         } else {
                             resolve();
                         }
@@ -504,14 +538,54 @@ const changePassword = async (req, res) => {
                 );
             });
 
-            console.log("Password updated successfully.");
-            return res.status(200).json({ message: 'Password updated successfully.' });
+            console.log(`Admin ${requesterUsername} updated password.`);
+            return res
+                .status(200)
+                .json({ message: "Password updated successfully by Admin." });
         }
 
-        return res.status(403).json({ error: 'You are not authorized to change this password.' });
+        if (requesterUsername === req.params.username) {
+            await new Promise((resolve, reject) => {
+                db.run(
+                    `UPDATE users SET password = ? WHERE username = ?`,
+                    [hashedPassword, req.params.username],
+                    (err) => {
+                        if (err) {
+                            console.error(
+                                "Error updating password in SQLite:",
+                                err.message
+                            );
+                            reject(
+                                new Error(
+                                    "Error updating password in SQLite: " +
+                                    err.message
+                                )
+                            );
+                        } else {
+                            resolve();
+                        }
+                    }
+                );
+            });
+
+            console.log(`${requesterUsername} updated their own password.`);
+            return res
+                .status(200)
+                .json({ message: "Password updated successfully." });
+        }
+
+        console.log(
+            `Unauthorized attempt to change password: ${requesterUsername}`
+        );
+        return res
+            .status(403)
+            .json({ error: "You are not authorized to change this password." });
     } catch (err) {
         console.error("Error changing password:", err);
-        return res.status(500).json({ error: 'Error changing password', details: err.message });
+        return res.status(500).json({
+            error: "Error changing password",
+            details: err.message,
+        });
     }
 };
 
@@ -526,9 +600,6 @@ const logout = (req, res) => {
         res.status(500).json({ error: 'Error logging out' });
     }
 };
-
-module.exports = { logout };
-
 
 module.exports = {
     registerUser,
